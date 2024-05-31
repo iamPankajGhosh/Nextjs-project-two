@@ -1,4 +1,4 @@
-import { connectDB } from "@/db";
+import { connectDB } from "@/db/index";
 import User from "@/models/user.models";
 import { NextRequest, NextResponse } from "next/server";
 import bcryptjs from "bcryptjs";
@@ -8,11 +8,12 @@ connectDB();
 
 export async function POST(request: NextRequest) {
   try {
-    const reqBody = request.json();
-    const { username, email, password }: any = reqBody;
+    const reqBody = await request.json();
+    const { username, email, password } = reqBody;
 
     console.log(reqBody);
 
+    //check if user already exists
     const user = await User.findOne({ email });
 
     if (user) {
@@ -22,6 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    //hash password
     const salt = await bcryptjs.genSalt(10);
     const hashedPassword = await bcryptjs.hash(password, salt);
 
@@ -35,6 +37,7 @@ export async function POST(request: NextRequest) {
     console.log(savedUser);
 
     //send verification email
+
     await sendEmail({ email, emailType: "VERIFY", userId: savedUser._id });
 
     return NextResponse.json({
